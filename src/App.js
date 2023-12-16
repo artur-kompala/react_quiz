@@ -9,6 +9,7 @@ import StartScreen from './components/questions/StartScreen';
 import Question from './components/questions/Question';
 import NextButton from './components/buttons/NextButton';
 import Progress from './components/progressBar/Progress';
+import FinishedScreen from './components/questions/FinishedScreen';
 const initialState = {
   questions: [],
   status: 'loading', //loading,err,active,ready,finish,
@@ -30,6 +31,8 @@ const reducer = (state,action) =>{
         return {...state,answer: payload,points: action.payload === question.correctOption ? state.points + question.points : state.points}
       case 'nextQuestion':
         return {...state, index: state.index + 1,answer: null}
+      case 'finish':
+        return {...state, status: 'finished'}
       default:
         throw new Error("Action unknow")
     }
@@ -52,12 +55,20 @@ function App() {
     <div className="app">
         <Header></Header>
         <Main>
-          <Progress index={index} numQuestions={numQuestions} points={points} maxPossiblePoints={maxPossiblePoints} answer={answer}></Progress>
+          
           {status === "loading" && <Loader></Loader>}
           {status === "error" && <Error></Error>}
           {status === "ready" && <StartScreen numQuestions={numQuestions} dispatch={dispatch}></StartScreen>}
-          {status === 'active' && <Question question={questions[index] } dispatch={dispatch} answer={answer}></Question>}
-          <NextButton dispatch={dispatch} answer={answer}></NextButton>
+          {status === 'active' && 
+          <>
+          <Progress index={index} numQuestions={numQuestions} points={points} maxPossiblePoints={maxPossiblePoints} answer={answer}></Progress>
+          <Question question={questions[index] } dispatch={dispatch} answer={answer}></Question>
+          <NextButton dispatch={dispatch} answer={answer} index={index} numQuestions={numQuestions}></NextButton>
+          </>
+          
+          }
+          
+          {status === 'finished' && <FinishedScreen points={points} maxPossiblePoints={maxPossiblePoints}></FinishedScreen>}
         </Main>
     </div>
   );
