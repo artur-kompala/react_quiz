@@ -10,13 +10,19 @@ import Question from './components/questions/Question';
 import NextButton from './components/buttons/NextButton';
 import Progress from './components/progressBar/Progress';
 import FinishedScreen from './components/questions/FinishedScreen';
+import Footer from './components/Footer/Footer';
+import Timer from './components/Footer/Timer';
+const SEC_PER_QUESTION = 30;
+
 const initialState = {
   questions: [],
   status: 'loading', //loading,err,active,ready,finish,
   index: 0,
   answer: null,
   points: 0,
+  secondsRemaining: null
 }
+
 const reducer = (state,action) =>{
     const {type,payload} = action;
     switch(type){
@@ -25,7 +31,7 @@ const reducer = (state,action) =>{
       case 'dataFailed':
         return {...state, status: 'error'}
       case 'start':
-        return {...state, status: 'active'}
+        return {...state, status: 'active', secondsRemaining: state.questions.length * SEC_PER_QUESTION}
       case 'newAnswer':
         const question = state.questions.at(state.index);
         return {...state,answer: payload,points: action.payload === question.correctOption ? state.points + question.points : state.points}
@@ -34,14 +40,16 @@ const reducer = (state,action) =>{
       case 'finish':
         return {...state, status: 'finished'}
       case 'restart':
-        return {...initialState, status: 'ready',index: 0, answer: null, points: 0}
+        return {...initialState, questions: state.questions, status: 'ready'}
+        case 'tick':
+          return {...state, secondsRemaining: state.secondsRemaining - 1, status: state.secondsRemaining === 0 ? 'finished' : state.status}
       default:
         throw new Error("Action unknow")
     }
 }
 function App() {
 
-  const [{questions,status,index,answer,points},dispatch] = useReducer(reducer,initialState)
+  const [{questions,status,index,answer,points,secondsRemaining},dispatch] = useReducer(reducer,initialState)
 
   const numQuestions = questions.length;
   const maxPossiblePoints = questions.reduce((prev,cur)=>prev + cur.points,0)
@@ -65,7 +73,11 @@ function App() {
           <>
           <Progress index={index} numQuestions={numQuestions} points={points} maxPossiblePoints={maxPossiblePoints} answer={answer}></Progress>
           <Question question={questions[index] } dispatch={dispatch} answer={answer}></Question>
-          <NextButton dispatch={dispatch} answer={answer} index={index} numQuestions={numQuestions}></NextButton>
+          <Footer>
+            <Timer dispatch={dispatch} secondsRemaining={secondsRemaining}></Timer>
+            <NextButton dispatch={dispatch} answer={answer} index={index} numQuestions={numQuestions}></NextButton>
+          </Footer>
+          
           </>
           
           }
